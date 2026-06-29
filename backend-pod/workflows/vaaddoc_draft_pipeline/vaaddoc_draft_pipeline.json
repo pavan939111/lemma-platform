@@ -1,0 +1,179 @@
+{
+  "name": "vaaddoc_draft_pipeline",
+  "description": "Orchestrates the 7-agent plaint and legal notice drafting pipeline with BNS transition checks.",
+  "start": { "type": "MANUAL" },
+  "nodes": [
+    {
+      "id": "intake",
+      "type": "FORM",
+      "label": "Case Notes Intake",
+      "config": {
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "raw_input": { "type": "string", "title": "Raw Case Notes" },
+            "document_type": { "type": "string", "title": "Document Type" },
+            "offence_date": { "type": "string", "title": "Offence Date" },
+            "session_id": { "type": "string", "title": "Session ID" }
+          },
+          "required": ["raw_input", "document_type", "session_id"]
+        }
+      }
+    },
+    {
+      "id": "a1_input_handler",
+      "type": "FUNCTION",
+      "label": "A1 Input Handler",
+      "config": {
+        "function_name": "handle_input",
+        "input_mapping": {
+          "raw_input": { "type": "expression", "value": "intake.raw_input" },
+          "document_type": { "type": "expression", "value": "intake.document_type" },
+          "session_id": { "type": "expression", "value": "intake.session_id" }
+        }
+      }
+    },
+    {
+      "id": "a2_legal_cleaner",
+      "type": "AGENT",
+      "label": "A2 Legal Cleaner",
+      "config": {
+        "agent_name": "legal_cleaner",
+        "input_mapping": {
+          "message": { "type": "expression", "value": "a1_input_handler.normalized_text" }
+        }
+      }
+    },
+    {
+      "id": "a3_entity_extractor",
+      "type": "AGENT",
+      "label": "A3 Entity Extractor",
+      "config": {
+        "agent_name": "entity_extractor",
+        "input_mapping": {
+          "message": { "type": "expression", "value": "a2_legal_cleaner.answer" }
+        }
+      }
+    },
+    {
+      "id": "a4_validator",
+      "type": "FUNCTION",
+      "label": "A4 Validator Gate",
+      "config": {
+        "function_name": "validate_entities",
+        "input_mapping": {
+          "extracted_entities": { "type": "expression", "value": "a3_entity_extractor.answer" },
+          "document_type": { "type": "expression", "value": "intake.document_type" },
+          "offence_date": { "type": "expression", "value": "intake.offence_date" }
+        }
+      }
+    },
+    {
+      "id": "decision_gate",
+      "type": "DECISION",
+      "label": "Is Valid?",
+      "config": {
+        "rules": [
+          {
+            "condition": "a4_validator.valid == true",
+            "next_node_id": "a5_law_router"
+          },
+          {
+            "condition": "a4_validator.valid == false",
+            "next_node_id": "clarifications_node"
+          }
+        ]
+      }
+    },
+    {
+      "id": "clarifications_node",
+      "type": "FORM",
+      "label": "Lawyer Clarifications Form",
+      "config": {
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "valuation_of_suit": { "type": "string", "title": "Valuation of the Suit (Rs.)" }
+          }
+        }
+      }
+    },
+    {
+      "id": "a4_resume_validator",
+      "type": "FUNCTION",
+      "label": "A4 Validator Resumed",
+      "config": {
+        "function_name": "validate_entities",
+        "input_mapping": {
+          "extracted_entities": { "type": "expression", "value": "a3_entity_extractor.answer" },
+          "document_type": { "type": "expression", "value": "intake.document_type" },
+          "clarification_answers": { "type": "expression", "value": "clarifications_node" },
+          "offence_date": { "type": "expression", "value": "intake.offence_date" }
+        }
+      }
+    },
+    {
+      "id": "a5_law_router",
+      "type": "FUNCTION",
+      "label": "A5 Law Router",
+      "config": {
+        "function_name": "route_legal_framework",
+        "input_mapping": {
+          "document_type": { "type": "expression", "value": "intake.document_type" },
+          "extracted_sections": { "type": "expression", "value": "a4_validator.confirmed_entities.statutory_sections_mentioned" },
+          "offence_date": { "type": "expression", "value": "intake.offence_date" }
+        }
+      }
+    },
+    {
+      "id": "a6_doc_builder",
+      "type": "FUNCTION",
+      "label": "A6 Document Builder",
+      "config": {
+        "function_name": "build_document",
+        "input_mapping": {
+          "entities": { "type": "expression", "value": "a4_resume_validator.confirmed_entities || a4_validator.confirmed_entities" },
+          "legal_framework": { "type": "expression", "value": "a5_law_router.framework" },
+          "session_id": { "type": "expression", "value": "intake.session_id" },
+          "document_type": { "type": "expression", "value": "intake.document_type" }
+        }
+      }
+    },
+    {
+      "id": "a7_qc_guard",
+      "type": "FUNCTION",
+      "label": "A7 QC Guard",
+      "config": {
+        "function_name": "run_qc",
+        "input_mapping": {
+          "entities": { "type": "expression", "value": "a4_resume_validator.confirmed_entities || a4_validator.confirmed_entities" },
+          "cleaned_transcript": { "type": "expression", "value": "a2_legal_cleaner.answer" },
+          "document_type": { "type": "expression", "value": "intake.document_type" },
+          "legal_framework": { "type": "expression", "value": "a5_law_router.framework" },
+          "session_id": { "type": "expression", "value": "intake.session_id" },
+          "docx_url": { "type": "expression", "value": "a6_doc_builder.docx_url" }
+        }
+      }
+    },
+    {
+      "id": "end",
+      "type": "END",
+      "label": "Draft Prepared"
+    }
+  ],
+  "edges": [
+    { "id": "e1", "source": "intake", "target": "a1_input_handler" },
+    { "id": "e2", "source": "a1_input_handler", "target": "a2_legal_cleaner" },
+    { "id": "e3", "source": "a2_legal_cleaner", "target": "a3_entity_extractor" },
+    { "id": "e4", "source": "a3_entity_extractor", "target": "a4_validator" },
+    { "id": "e5", "source": "a4_validator", "target": "decision_gate" },
+    { "id": "e6", "source": "decision_gate", "target": "a5_law_router" },
+    { "id": "e7", "source": "decision_gate", "target": "clarifications_node" },
+    { "id": "e8", "source": "clarifications_node", "target": "a4_resume_validator" },
+    { "id": "e9", "source": "a4_resume_validator", "target": "a5_law_router" },
+    { "id": "e10", "source": "a5_law_router", "target": "a6_doc_builder" },
+    { "id": "e11", "source": "a6_doc_builder", "target": "a7_qc_guard" },
+    { "id": "e12", "source": "a7_qc_guard", "target": "end" }
+  ],
+  "visibility": "POD"
+}

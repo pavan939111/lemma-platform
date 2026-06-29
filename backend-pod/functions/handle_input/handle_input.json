@@ -1,0 +1,21 @@
+{
+  "name": "handle_input",
+  "description": "Normalize Unicode, check script language, and save raw notes.",
+  "type": "API",
+  "visibility": "POD",
+  "code": {
+    "$file": "code.py"
+  },
+  "permissions": {
+    "grants": [
+      {
+        "resource_type": "folder",
+        "resource_name": "/inputs",
+        "permission_ids": [
+          "folder.read",
+          "folder.write"
+        ]
+      }
+    ]
+  }
+}

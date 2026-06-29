@@ -1,0 +1,28 @@
+{
+  "name": "build_document",
+  "description": "Deterministic placeholder compiler using docxtpl.",
+  "type": "API",
+  "visibility": "POD",
+  "code": {
+    "$file": "code.py"
+  },
+  "permissions": {
+    "grants": [
+      {
+        "resource_type": "folder",
+        "resource_name": "/generated",
+        "permission_ids": [
+          "folder.read",
+          "folder.write"
+        ]
+      },
+      {
+        "resource_type": "folder",
+        "resource_name": "/templates",
+        "permission_ids": [
+          "folder.read"
+        ]
+      }
+    ]
+  }
+}

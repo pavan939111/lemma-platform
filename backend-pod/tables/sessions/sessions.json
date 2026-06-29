@@ -1,0 +1,12 @@
+{
+  "name": "sessions",
+  "primary_key_column": "id",
+  "enable_rls": false,
+  "visibility": "POD",
+  "columns": [
+    { "name": "session_id", "type": "TEXT", "required": true },
+    { "name": "status", "type": "TEXT", "required": true },
+    { "name": "current_agent", "type": "TEXT", "required": false },
+    { "name": "data", "type": "TEXT", "required": true }
+  ]
+}

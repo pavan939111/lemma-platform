@@ -1,0 +1,13 @@
+{
+  "name": "deadlines",
+  "primary_key_column": "id",
+  "enable_rls": false,
+  "visibility": "POD",
+  "columns": [
+    { "name": "case_id", "type": "TEXT", "required": true },
+    { "name": "title", "type": "TEXT", "required": true },
+    { "name": "basis", "type": "TEXT", "required": true },
+    { "name": "target_date", "type": "TEXT", "required": true },
+    { "name": "days_remaining", "type": "INTEGER", "required": true }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "name": "route_legal_framework",
+  "description": "Determine BNS/IPC legal framework based on offence date.",
+  "type": "API",
+  "visibility": "POD",
+  "code": { "$file": "code.py" }
+}

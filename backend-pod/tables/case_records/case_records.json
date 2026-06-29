@@ -1,0 +1,13 @@
+{
+  "name": "case_records",
+  "primary_key_column": "id",
+  "enable_rls": false,
+  "visibility": "POD",
+  "columns": [
+    { "name": "session_id", "type": "TEXT", "required": true },
+    { "name": "document_type", "type": "TEXT", "required": true },
+    { "name": "docx_url", "type": "TEXT", "required": true },
+    { "name": "confidence_score", "type": "FLOAT", "required": true },
+    { "name": "legal_framework", "type": "TEXT", "required": true }
+  ]
+}

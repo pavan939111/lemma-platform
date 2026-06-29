@@ -1,0 +1,9 @@
+{
+  "name": "legal_cleaner",
+  "description": "Clean raw case notes, label speakers, and standardize dates.",
+  "instruction": { "$file": "instruction.md" },
+  "model": "gemini-2.5-flash",
+  "temperature": 0.1,
+  "toolsets": ["POD"],
+  "visibility": "POD"
+}

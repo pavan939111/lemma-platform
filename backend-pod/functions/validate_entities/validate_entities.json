@@ -1,0 +1,7 @@
+{
+  "name": "validate_entities",
+  "description": "Verify extracted fields against document requirements.",
+  "type": "API",
+  "visibility": "POD",
+  "code": { "$file": "code.py" }
+}

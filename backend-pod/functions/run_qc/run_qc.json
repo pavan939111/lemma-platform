@@ -1,0 +1,7 @@
+{
+  "name": "run_qc",
+  "description": "Perform grounding validation, section audits, and deadlines calculations.",
+  "type": "API",
+  "visibility": "POD",
+  "code": { "$file": "code.py" }
+}

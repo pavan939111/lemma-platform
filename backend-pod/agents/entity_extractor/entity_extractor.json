@@ -1,0 +1,9 @@
+{
+  "name": "entity_extractor",
+  "description": "Extract structured case entities with source grounding text references.",
+  "instruction": { "$file": "instruction.md" },
+  "model": "gemini-2.5-flash",
+  "temperature": 0.0,
+  "toolsets": ["POD"],
+  "visibility": "POD"
+}
