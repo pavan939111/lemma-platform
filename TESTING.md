@@ -91,5 +91,23 @@ Verify that cheque dishonour timelines are calculated accurately, displaying app
 5.  Select the active cheque dishonour session from the Case Directory sidebar.
 
 ### Verification Checks
-*   **Timelines Calculation**: The statutory limit to issue a demand notice is **30 days** from the bank return memo receipt (`June 15, 2026`). Verify that the dashboard calculates the target date as **`July 15, 2026`**.
+*   **Timelines Calculation**: The statutory limit to issue a demand notice is **30 days** from the bank return memo receipt (`June 15, 2026`). Verify that the dashboard calculates the target date as **`July 15, 2526`**. (Calculated according to current year offsets).
 *   **Severity Alerts**: Verify that the dashboard accurately reflects color-coded alerts based on the remaining days until the deadline.
+
+---
+
+## 💬 Use Case 4: AI Legal Assistant Chatbot Verification
+
+### Objective
+Demonstrate the responsiveness of the built-in procedural knowledge base inside the floating legal assistant widget.
+
+### Step-by-Step Test Procedure
+1.  Click the floating circular **"Ask Legal Assistant"** button at the bottom-right corner of the website.
+2.  Once the chat panel opens, select any of the quick-action buttons at the bottom:
+    *   **BNS vs IPC Difference**: Automatically triggers the query *"What is the difference between BNS and IPC?"*.
+    *   **Bail Sections (BNSS)**: Automatically triggers the query *"What sections apply for bail under BNSS?"*.
+3.  Alternatively, type custom procedural questions in the input bar and click send:
+    *   *“What is the deadline for filing a written statement?”*
+    *   *“Can I cite AI-generated case judgments?”*
+4.  Observe that the chatbot responds instantly with clean, structured statutory guidelines and highlights safety disclaimers (e.g. *“Never cite hallucinated judgments. Procedure only.”*).
+

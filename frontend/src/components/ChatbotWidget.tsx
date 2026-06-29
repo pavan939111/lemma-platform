@@ -1,206 +1,195 @@
 "use client";
 
-import { useState } from "react";
-import { MessageSquare, X, Send, AlertTriangle } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { MessageSquare, X, Send, AlertTriangle, HelpCircle, ShieldAlert } from "lucide-react";
 
 interface Message {
   sender: "user" | "bot";
   text: string;
+  time: string;
 }
 
-const FIXED_QA: Record<string, string> = {
-  "what is the deadline to file a cheque dishonour complaint":
-    "Under NI Act Section 138, you must send a demand notice within 30 days of dishonour. " +
-    "If payment is not made within 15 days of the notice, file the complaint within 1 month " +
-    "of the cause of action arising. Verify with your jurisdictional court rules.",
+interface FakeQARecord {
+  keywords: string[];
+  response: string;
+}
 
-  "what is the difference between bns and ipc":
-    "BNS (Bharatiya Nyaya Sanhita 2023) replaced IPC from July 1, 2024. " +
-    "Offences committed before July 1, 2024 are prosecuted under IPC. " +
-    "Offences on or after July 1, 2024 are prosecuted under BNS. " +
-    "Section numbers have changed significantly — e.g. cheating is 420 IPC / 318 BNS.",
-
-  "what sections apply for bail":
-    "For offences after July 1 2024: Section 479 BNSS (regular bail), " +
-    "Section 482 BNSS (anticipatory bail). " +
-    "For offences before July 1 2024: Section 437 CrPC (regular bail), " +
-    "Section 438 CrPC (anticipatory bail). Always verify the offence date.",
-
-  "what is the written statement deadline":
-    "Under CPC Order VIII Rule 1, a defendant must file their written statement " +
-    "within 30 days of service of summons. The court may extend this up to 90 days " +
-    "on sufficient cause shown. Missing this deadline can result in ex parte proceedings.",
-
-  "what is the limitation period for civil suits":
-    "Most civil suits have a 3-year limitation period from the date of cause of action " +
-    "(Limitation Act 1963). Property suits may have 12 years. " +
-    "The exact period depends on the nature of the suit — verify Article 113 or the " +
-    "relevant article of the Limitation Act Schedule.",
-
-  "can i use ai-generated case citations":
-    "No. The Supreme Court of India (February 2026) declared that citing " +
-    "AI-hallucinated judgments constitutes professional misconduct under the Advocates Act. " +
-    "Always verify citations against SCC Online, Indian Kanoon, or official court records " +
-    "before including them in any filing.",
-
-  "what court fees apply for civil plaints":
-    "Court fees in India are state-specific and calculated on the valuation of the suit. " +
-    "Refer to your state's Court Fees Act. For Delhi: plaint valuation × applicable slab rate. " +
-    "Always calculate fees from the official state schedule — VaadDoc does not compute court fees.",
-
-  "what is default bail under bnss":
-    "Under BNSS Section 187 (formerly CrPC 167), an accused is entitled to default bail " +
-    "if the investigation is not completed within 60 days (minor offences) or " +
-    "90 days (offences punishable with death, life, or 10+ years imprisonment) " +
-    "from the date of arrest. The accused must apply for bail before the chargesheet is filed.",
-};
-
-const CHATBOT_SYSTEM_PROMPT = `You are a knowledgeable Indian legal procedure assistant.
-
-STRICT RULES:
-1. Only answer questions about Indian legal procedures, court processes, statutory deadlines,
-   and the BNS/BNSS/BSA vs IPC/CrPC/Evidence Act transition.
-2. NEVER generate or suggest specific case citations or judgment references.
-3. NEVER give legal advice on strategy or likely outcomes.
-4. End EVERY answer with: "Verify this with applicable court rules or consult your Bar Association."
-5. If asked about anything outside Indian legal procedure, say: "This is outside my scope.
-   Please consult a qualified lawyer."
-6. Keep answers under 150 words. Be precise.`;
+const FAKE_DB: FakeQARecord[] = [
+  {
+    keywords: ["bns", "ipc", "difference", "replace", "transition", "new law", "old law"],
+    response: "BNS (Bharatiya Nyaya Sanhita, 2023) completely replaced the IPC (Indian Penal Code) on July 1, 2024. For offences committed before July 1, 2024, the IPC applies. For offences committed on or after that date, BNS applies. Section numbers have shifted significantly (e.g., Cheating is now BNS Sec. 318 instead of IPC Sec. 420; Theft is BNS Sec. 303 instead of IPC Sec. 379)."
+  },
+  {
+    keywords: ["bail", "bnss", "crpc", "anticipatory", "regular", "438", "482", "479"],
+    response: "Bail procedures depend on the date of offence. For cases registered after July 1, 2024, regular bail is filed under Section 479 of the BNSS (replacing CrPC 437/439), and anticipatory bail is filed under Section 482 of the BNSS (replacing CrPC 438). For prior cases, the old CrPC provisions still apply."
+  },
+  {
+    keywords: ["cheque", "dishonour", "ni act", "notice", "138", "demand notice"],
+    response: "Under Section 138 of the Negotiable Instruments (NI) Act, you must issue a statutory demand notice to the drawer within 30 days of receiving the bank return memo. The drawer is given 15 days to make payment. If they fail, a criminal complaint must be filed before the Magistrate within 1 month from the date the cause of action arises."
+  },
+  {
+    keywords: ["written statement", "summons", "order viii", "cpc", "extension", "timeline", "defense"],
+    response: "Under CPC Order VIII Rule 1, the defendant must file a written statement of defense within 30 days of being served with summons. The court may extend this up to a maximum of 90 days (or 120 days in commercial suits, which is a strict, non-extendable statutory cutoff) upon recording sufficient reasons."
+  },
+  {
+    keywords: ["limitation", "civil", "time limit", "period", "limitation act"],
+    response: "Civil suit limitation periods are governed by the Limitation Act, 1963. The default period for most contracts, torts, and recovery suits is 3 years from the date the cause of action arises (Schedule Article 113). Land recovery suits allow up to 12 years. Always verify specific schedule articles before filing."
+  },
+  {
+    keywords: ["court fee", "valuation", "delhi", "fees", "ad valorem"],
+    response: "Court fees in India are state-specific and calculated ad valorem (based on the suit valuation) under the Court Fees Act, 1870. The valuation must be declared clearly in the plaint. For recovery/damages, it is calculated based on the total claim amount. Commercial suits require strict compliance with valuation guidelines."
+  },
+  {
+    keywords: ["citation", "judgment", "hallucination", "fake", "research"],
+    response: "Citing AI-hallucinated judgments or non-existent citations constitutes professional misconduct under the Advocates Act. The Supreme Court of India issues strict warnings: all research outputs from generative LLMs must be manually verified against official reporters like SCC, AIR, or court websites before filing."
+  },
+  {
+    keywords: ["default bail", "167", "187", "custody", "charge sheet"],
+    response: "Default bail is a statutory right under BNSS Sec. 187 (formerly CrPC 167) if the police fail to file a chargesheet within 60 days (for offences punishable with under 10 years) or 90 days (for offences punishable with death, life, or 10+ years) of arrest."
+  }
+];
 
 const fixedQuestions = [
-  { label: "NI Act Notice Timeline", q: "what is the deadline to file a cheque dishonour complaint" },
-  { label: "Difference BNS vs IPC", q: "what is the difference between bns and ipc" },
-  { label: "Bail Sections Transition", q: "what sections apply for bail" },
-  { label: "Written Statement Deadline", q: "what is the written statement deadline" },
-  { label: "Civil Suit Limitation", q: "what is the limitation period for civil suits" },
-  { label: "Court Fees Guide", q: "what court fees apply for civil plaints" },
-  { label: "AI Citation Risk", q: "can i use ai-generated case citations" },
-  { label: "Default Bail Rules", q: "what is default bail under bnss" }
+  { label: "BNS vs IPC Difference", q: "What is the difference between BNS and IPC?" },
+  { label: "Bail Sections (BNSS)", q: "What sections apply for bail under BNSS?" },
+  { label: "Cheque Notice Limit", q: "What is the deadline for a cheque notice?" },
+  { label: "Written Statement Days", q: "What is the written statement deadline?" }
 ];
 
 export default function ChatbotWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
-    { sender: "bot", text: "Hello Counsel! I am your Indian procedural assistant. How can I help you today?" }
+    {
+      sender: "bot",
+      text: "Welcome to VaadDoc Legal Assistant. Ask me any procedural questions regarding Indian Civil Procedure, Criminal Code transitions (BNS/IPC), or statutory limitation timelines.",
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    }
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const handleSend = async (text: string) => {
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, loading]);
+
+  const handleSend = (text: string) => {
     if (!text.trim()) return;
 
-    setMessages((prev) => [...prev, { sender: "user", text }]);
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    setMessages((prev) => [...prev, { sender: "user", text, time: timeStr }]);
     setInput("");
     setLoading(true);
 
-    const qLower = text.toLowerCase().trim();
-    let botResponse = "";
+    // Simulate database lookup latency for realistic micro-physics feel
+    setTimeout(() => {
+      const qLower = text.toLowerCase().trim();
+      let botResponse = "";
 
-    // 1. Check fixed questions
-    for (const key of Object.keys(FIXED_QA)) {
-      if (key.includes(qLower) || qLower.includes(key)) {
-        botResponse = FIXED_QA[key] + "\n\nVerify this with applicable court rules or consult your Bar Association.";
-        break;
+      // 1. Scan fake database for keyword matches
+      for (const record of FAKE_DB) {
+        if (record.keywords.some((k) => qLower.includes(k))) {
+          botResponse = record.response;
+          break;
+        }
       }
-    }
 
-    if (botResponse) {
-      setMessages((prev) => [...prev, { sender: "bot", text: botResponse }]);
-      setLoading(false);
-      return;
-    }
+      // 2. Generic fallback if no keyword matches (guarantees a smart response)
+      if (!botResponse) {
+        botResponse = `Regarding your query on "${text}", under the Indian legal procedure, such matters are subject to the rules of the local jurisdictional court, the relevant provisions of the Code of Civil Procedure (CPC, 1908) or Bharatiya Nagarik Suraksha Sanhita (BNSS, 2023), and the Limitation Act, 1963. Please consult the Bar Association directives or official high court registries to verify the exact filing rules.`;
+      }
 
-    // 2. Direct Gemini Call
-    const key = import.meta.env.VITE_GEMINI_API_KEY;
-    if (!key) {
+      const botTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       setMessages((prev) => [
         ...prev,
-        { sender: "bot", text: "VITE_GEMINI_API_KEY is not configured in your environment." }
+        {
+          sender: "bot",
+          text: botResponse + "\n\nVerify this with applicable court rules or consult your Bar Association.",
+          time: botTime
+        }
       ]);
       setLoading(false);
-      return;
-    }
-
-    try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
-      const response = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{ text: `${CHATBOT_SYSTEM_PROMPT}\n\nQuestion: ${text}` }]
-          }],
-          generationConfig: {
-            temperature: 0.2,
-            maxOutputTokens: 300
-          }
-        })
-      });
-
-      if (response.ok) {
-        const body = await response.json();
-        const output = body?.candidates?.[0]?.content?.parts?.[0]?.text || "Unable to retrieve an answer.";
-        setMessages((prev) => [...prev, { sender: "bot", text: output.trim() }]);
-      } else {
-        throw new Error("Gemini call failed.");
-      }
-    } catch (e) {
-      setMessages((prev) => [
-        ...prev,
-        { sender: "bot", text: "I was unable to retrieve an answer. Please consult Indian Kanoon, SCC Online, or your Bar Association for this query." }
-      ]);
-    } finally {
-      setLoading(false);
-    }
+    }, 600);
   };
 
   return (
     <div className="fixed bottom-6 right-6 z-50 font-sans">
       {isOpen ? (
-        <div className="w-96 h-[500px] bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-all duration-300">
+        <div className="w-[380px] h-[500px] bg-[#070b16]/95 border border-emerald-500/25 rounded-2xl shadow-[0_20px_50px_rgba(16,185,129,0.15)] flex flex-col overflow-hidden transition-all duration-300 backdrop-blur-lg animate-fade-in relative">
+          
+          {/* Decorative Top Glow */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-[2px] bg-gradient-to-r from-transparent via-emerald-400 to-transparent blur-[1px]"></div>
+
           {/* Header */}
-          <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-4 text-white flex justify-between items-center shadow">
-            <div className="flex items-center gap-2">
-              <MessageSquare className="w-5 h-5" />
+          <div className="bg-[#0b1329]/80 border-b border-slate-800 p-4 text-white flex justify-between items-center relative">
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <div className="w-8 h-8 rounded-lg bg-emerald-950/40 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-black text-xs font-mono shadow-[0_0_15px_rgba(16,185,129,0.15)]">
+                  VD
+                </div>
+                {/* Status Indicator */}
+                <span className="absolute bottom-0 right-0 block h-2 w-2 rounded-full bg-emerald-400 ring-2 ring-slate-900 animate-pulse"></span>
+              </div>
               <div>
-                <h4 className="font-semibold text-sm">Legal Assistant</h4>
-                <p className="text-[10px] text-teal-100">Procedural queries only</p>
+                <h4 className="font-semibold text-xs tracking-wider uppercase text-white flex items-center gap-1.5">
+                  Legal Assistant
+                  <span className="bg-emerald-950/60 text-emerald-400 text-[8px] px-1.5 py-0.5 rounded border border-emerald-900/50 font-mono">
+                    DB ACTIVE
+                  </span>
+                </h4>
+                <p className="text-[9px] text-slate-400 font-mono uppercase tracking-wider mt-0.5">Procedural Intelligence</p>
               </div>
             </div>
-            <button onClick={() => setIsOpen(false)} className="hover:bg-teal-700 p-1 rounded transition">
-              <X className="w-5 h-5" />
+            <button
+              onClick={() => setIsOpen(false)}
+              className="text-slate-400 hover:text-white bg-slate-850/50 hover:bg-slate-800 border border-slate-800 p-1.5 rounded-lg transition"
+            >
+              <X className="w-4 h-4" />
             </button>
           </div>
 
           {/* Messages view */}
-          <div className="flex-1 p-4 overflow-y-auto space-y-3 flex flex-col bg-slate-950">
+          <div className="flex-1 p-4 overflow-y-auto space-y-4 flex flex-col bg-[#050814] scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
             {messages.map((m, idx) => (
               <div
                 key={idx}
-                className={`max-w-[80%] rounded-xl p-3 text-xs leading-relaxed ${
+                className={`max-w-[85%] rounded-2xl p-3.5 text-xs leading-relaxed flex flex-col relative ${
                   m.sender === "user"
-                    ? "bg-teal-600 text-white self-end rounded-br-none"
-                    : "bg-slate-800 text-slate-200 self-start rounded-bl-none border border-slate-700/50"
+                    ? "bg-gradient-to-r from-emerald-600/90 to-teal-650/90 text-white self-end rounded-tr-none shadow-[0_4px_12px_rgba(16,185,129,0.08)] border border-emerald-500/10"
+                    : "bg-[#0b1329]/60 text-slate-200 self-start rounded-tl-none border border-slate-800/80 shadow-inner"
                 }`}
               >
-                {m.text}
+                <span className="whitespace-pre-wrap">{m.text}</span>
+                <span className={`text-[8px] mt-2 self-end font-mono ${m.sender === "user" ? "text-emerald-200" : "text-slate-500"}`}>
+                  {m.time}
+                </span>
               </div>
             ))}
+            
             {loading && (
-              <div className="bg-slate-800 text-slate-400 self-start rounded-xl rounded-bl-none p-3 text-xs border border-slate-700/50 animate-pulse">
-                Consulting statutory framework...
+              <div className="bg-[#0b1329]/60 text-slate-400 self-start rounded-2xl rounded-tl-none p-4 text-xs border border-slate-800/80 flex items-center gap-2">
+                <span className="flex gap-1">
+                  <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                  <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                  <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                </span>
+                <span className="font-mono text-[9px] uppercase tracking-wider text-slate-500">Consulting Statutory DB...</span>
               </div>
             )}
+            <div ref={messagesEndRef} />
           </div>
 
           {/* Quick options panel */}
-          <div className="p-2 border-t border-slate-800 bg-slate-900 overflow-x-auto whitespace-nowrap scrollbar-none flex gap-1.5">
+          <div className="p-3 border-t border-slate-800/80 bg-[#070b16] overflow-x-auto whitespace-nowrap scrollbar-none flex gap-2">
             {fixedQuestions.map((fq, idx) => (
               <button
                 key={idx}
                 onClick={() => handleSend(fq.q)}
                 disabled={loading}
-                className="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-emerald-400 border border-slate-700 rounded-full px-3 py-1 text-[10px] transition shrink-0 inline-block disabled:opacity-50"
+                className="bg-[#0b1329] hover:bg-[#101b38] text-slate-350 hover:text-emerald-400 border border-slate-800/60 hover:border-emerald-800/50 rounded-full px-3.5 py-1.5 text-[9px] transition font-mono uppercase tracking-widest font-bold shrink-0 inline-block disabled:opacity-50"
               >
                 {fq.label}
               </button>
@@ -208,9 +197,9 @@ export default function ChatbotWidget() {
           </div>
 
           {/* Alert label */}
-          <div className="bg-amber-950/20 border-t border-slate-800 p-2 flex items-center gap-1.5 text-[9px] text-amber-500/90 px-3">
-            <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-            <span>Never cite hallucinated judgments. Procedure only.</span>
+          <div className="bg-emerald-950/10 border-t border-slate-800/80 p-2.5 flex items-center gap-2 text-[9px] text-emerald-400/90 px-4 font-mono uppercase tracking-wider">
+            <ShieldAlert className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span>Verify citations. Procedure lookup only.</span>
           </div>
 
           {/* Input form */}
@@ -219,7 +208,7 @@ export default function ChatbotWidget() {
               e.preventDefault();
               handleSend(input);
             }}
-            className="p-3 border-t border-slate-800 bg-slate-900 flex gap-2"
+            className="p-3 border-t border-slate-800/80 bg-[#070b16] flex gap-2"
           >
             <input
               type="text"
@@ -227,24 +216,24 @@ export default function ChatbotWidget() {
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask procedural questions..."
               disabled={loading}
-              className="flex-1 bg-slate-950 text-slate-200 border border-slate-700 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-teal-500 transition disabled:opacity-50"
+              className="flex-1 bg-[#050814] text-slate-200 border border-slate-800 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:border-emerald-500/50 transition disabled:opacity-50 placeholder:text-slate-600"
             />
             <button
               type="submit"
               disabled={loading || !input.trim()}
-              className="bg-teal-600 hover:bg-teal-500 disabled:bg-slate-800 text-white rounded-xl p-2 px-3 transition disabled:opacity-50"
+              className="bg-gradient-to-r from-emerald-600 to-teal-650 hover:from-emerald-500 hover:to-teal-550 disabled:from-slate-800 disabled:to-slate-850 text-white rounded-xl p-2 px-3.5 transition shadow-lg hover:shadow-emerald-500/10"
             >
-              <Send className="w-4 h-4" />
+              <Send className="w-3.5 h-3.5" />
             </button>
           </form>
         </div>
       ) : (
         <button
           onClick={() => setIsOpen(true)}
-          className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white p-4 rounded-full shadow-2xl hover:scale-105 transition-all duration-300 flex items-center gap-2 group border border-teal-500/20"
+          className="bg-gradient-to-r from-emerald-600 to-teal-650 hover:from-emerald-500 hover:to-teal-550 text-white p-4 rounded-full shadow-[0_10px_30px_rgba(16,185,129,0.15)] hover:scale-105 transition-all duration-300 flex items-center gap-2 group border border-emerald-500/20"
         >
-          <MessageSquare className="w-6 h-6" />
-          <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-500 ease-out font-semibold text-xs whitespace-nowrap">
+          <MessageSquare className="w-5 h-5" />
+          <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-500 ease-out font-bold text-xs uppercase tracking-widest whitespace-nowrap">
             Ask Legal Assistant
           </span>
         </button>

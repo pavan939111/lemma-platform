@@ -71,7 +71,19 @@
 
 ---
 
-### SCENE 6: The Outro — The Winning Pitch (2:45 - 3:00)
+### SCENE 5.5: The Procedural Assistant Chatbot (2:40 - 2:55)
+* **Visuals:**
+  * **[Screen Recording - App UI]**
+    1. The presenter clicks the floating **"Ask Legal Assistant"** launcher in the bottom right.
+    2. The premium glassmorphic chat widget slides up.
+    3. The presenter clicks the quick question capsule: **"BNS vs IPC Difference"** and receives an instant structured reply mapping BNS Sec. 318 to IPC Sec. 420.
+    4. The presenter types custom query: *"Can I cite AI-generated judgments?"* and hits Send, receiving the strict professional misconduct warning and Supreme Court verification guidelines.
+* **Audio:**
+  * **[VO]** "Need quick procedural answers? Access our built-in offline legal procedural lookup assistant. Query statutory deadlines, check BNS vs IPC section changes, or verify critical practice directives instantly. The assistant keeps advocates aligned with professional standards, warning against AI citation hallucination risks."
+
+---
+
+### SCENE 6: The Outro — The Winning Pitch (2:55 - 3:10)
 * **Visuals:**
   * **[AI Clip - Futuristic Legal]** An advocate in court robes standing confidently, walking towards a high-tech modern courtroom or office. Bright, warm lighting.
   * *Prompt for AI Video Generator:* `Indian lawyer in court gown walking confidently, modern sleek high-tech office background, warm lighting, volumetric dust rays, cinematic, 4k.`
