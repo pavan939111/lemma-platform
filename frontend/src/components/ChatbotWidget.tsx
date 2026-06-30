@@ -171,8 +171,25 @@ export default function ChatbotWidget({ isOpen, setIsOpen, isSidebar = false }: 
 
     // Local RAG database lookup (fallback if API key is missing or fails)
     setTimeout(() => {
+      // Check if it is a greeting locally
+      const GREETING_KEYWORDS = ["hi", "hello", "hey", "good morning", "good afternoon", "who are you"];
+      const isGreetingLocal = GREETING_KEYWORDS.some((k) => qLower.includes(k) || qLower === k);
+      if (isGreetingLocal) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            sender: "bot",
+            text: "Hello! I am your VaadDoc legal assistant. How can I help you with Indian legal procedures, the statutory BNS/IPC transition, or our drafting tools today?",
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          }
+        ]);
+        setLoading(false);
+        return;
+      }
+
       // Check relevance locally for fallback path
       const isRelatedLocal = RELEVANT_KEYWORDS.some((k) => qLower.includes(k));
+
       if (!isRelatedLocal) {
         setMessages((prev) => [
           ...prev,
