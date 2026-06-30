@@ -11,8 +11,8 @@ if (typeof window !== "undefined") {
 
 
 
-const podId = import.meta.env.VITE_LEMMA_POD_ID;
-export const client = new LemmaClient(podId ? { podId } : {});
+export const client = new LemmaClient();
+
 
 export interface Question {
   field: string;
