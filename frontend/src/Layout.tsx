@@ -156,13 +156,22 @@ export default function Layout() {
               <div className="bg-emerald-950/20 border border-emerald-500/20 rounded-xl p-4 flex gap-3 text-xs leading-relaxed text-slate-350">
                 <HelpCircle className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
                 <div className="space-y-1">
-                  <span className="font-bold text-white uppercase tracking-wider text-[10px]">Session Token Instructions:</span>
-                  <p>To run litigation drafts and chat with LLM agents on this secure pod, link your session token:</p>
-                  <ol className="list-decimal pl-4 space-y-1 mt-1 font-mono text-[10px] text-slate-400">
-                    <li>Open terminal and run: <code className="text-emerald-300">lemma auth login</code></li>
-                    <li>Then output token with: <code className="text-emerald-300">lemma auth print-token</code></li>
-                    <li>Copy and paste the printed token string below.</li>
-                  </ol>
+                  <span className="font-bold text-white uppercase tracking-wider text-[10px]">Session Token & Auth Instructions:</span>
+                  <p>Lemma Cloud Pod endpoints are protected. Guests can authorize in two ways:</p>
+                  <div className="mt-2 space-y-2">
+                    <div>
+                      <span className="font-semibold text-emerald-400">Method A: Pod Membership (No Token Required)</span>
+                      <p className="text-[10px] text-slate-450 mt-0.5">Add the guest's email to the Pod Members list in your Lemma Web Console. Once they log in to <a href="https://lemma.work" target="_blank" rel="noopener noreferrer" className="underline text-emerald-300">lemma.work</a> in their browser, this app automatically authenticates them via session cookies.</p>
+                    </div>
+                    <div>
+                      <span className="font-semibold text-emerald-400">Method B: Paste Developer Token</span>
+                      <ol className="list-decimal pl-4 space-y-1 mt-1 font-mono text-[10px] text-slate-400">
+                        <li>Run: <code className="text-emerald-300">lemma auth login</code></li>
+                        <li>Run: <code className="text-emerald-300">lemma auth print-token</code></li>
+                        <li>Paste the printed token string below.</li>
+                      </ol>
+                    </div>
+                  </div>
                 </div>
               </div>
 
