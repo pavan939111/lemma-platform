@@ -6,9 +6,9 @@ export default function Layout() {
   const [isChatOpen, setIsChatOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#050814] flex flex-col text-slate-100 relative">
+    <div className={`min-h-screen bg-[#050814] flex flex-col text-slate-100 relative transition-all duration-300 ${isChatOpen ? 'pr-[380px]' : ''}`}>
       {/* Premium Glassmorphic Header */}
-      <header className="sticky top-0 z-40 bg-[#070b16]/70 backdrop-blur-md border-b border-slate-800/80 h-20 shrink-0">
+      <header className="sticky top-0 z-45 bg-[#070b16]/70 backdrop-blur-md border-b border-slate-800/80 h-20 shrink-0">
         <div className="max-w-[1920px] mx-auto px-6 h-full flex items-center justify-between">
           <div className="flex items-center gap-12">
             <Link to="/" className="flex items-center gap-2 group">
@@ -53,20 +53,16 @@ export default function Layout() {
         </div>
       </header>
 
-      {/* Main Split Layout Container */}
-      <div className="flex-1 flex flex-row overflow-hidden w-full max-w-[1920px] mx-auto h-[calc(100vh-80px)]">
-        
-        {/* Main Content Area (First 4 parts - 80% or flex-1) */}
-        <main className={`flex-1 p-6 md:p-10 overflow-y-auto transition-all duration-300 ${isChatOpen ? 'max-w-[70%] lg:max-w-[76%] xl:max-w-[80%]' : 'max-w-7xl mx-auto w-full'}`}>
-          <Outlet />
-        </main>
-        
-        {/* Chatbot Sidebar Area (Remaining 1 part - 20% or 380px) */}
-        <div className={`transition-all duration-300 border-l border-slate-800/80 bg-[#070b16]/95 backdrop-blur-md flex flex-col shrink-0 h-full ${isChatOpen ? 'w-[380px] opacity-100 visible' : 'w-0 opacity-0 invisible overflow-hidden border-l-transparent'}`}>
-          {isChatOpen && (
-            <ChatbotWidget isOpen={true} setIsOpen={setIsChatOpen} isSidebar={true} />
-          )}
-        </div>
+      {/* Main Content Area */}
+      <main className="flex-1 p-6 md:p-10 overflow-y-auto max-w-7xl mx-auto w-full transition-all duration-300">
+        <Outlet />
+      </main>
+
+      {/* Chatbot Sidebar Area (Full screen height sidebar) */}
+      <div className={`fixed top-0 right-0 h-screen z-50 border-l border-slate-800/80 bg-[#070b16]/95 backdrop-blur-md flex flex-col shrink-0 transition-all duration-300 ${isChatOpen ? 'w-[380px] opacity-100 visible' : 'w-0 opacity-0 invisible overflow-hidden border-l-transparent'}`}>
+        {isChatOpen && (
+          <ChatbotWidget isOpen={true} setIsOpen={setIsChatOpen} isSidebar={true} />
+        )}
       </div>
 
       {/* Floating launcher when chatbot is closed */}
