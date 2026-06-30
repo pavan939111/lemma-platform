@@ -1,0 +1,9 @@
+{
+  "name": "chatbot_agent",
+  "description": "RAG procedural legal assistant with query classification and knowledge store context.",
+  "instruction": { "$file": "instruction.md" },
+  "model": "gemini-2.5-flash",
+  "temperature": 0.1,
+  "toolsets": ["POD"],
+  "visibility": "POD"
+}
