@@ -1,17 +1,38 @@
 import { LemmaClient } from "lemma-sdk";
 
-const token = import.meta.env.VITE_LEMMA_TOKEN;
-if (typeof window !== "undefined") {
-  if (window.location.hostname.endsWith(".apps.lemma.work")) {
-    localStorage.removeItem("lemma_token");
-  } else if (token) {
-    localStorage.setItem("lemma_token", token);
+const isBrowser = typeof window !== "undefined";
+
+// Resolve token
+let activeToken = "";
+if (isBrowser) {
+  const manualToken = localStorage.getItem("lemma_token");
+  if (manualToken) {
+    activeToken = manualToken;
+  } else {
+    const envToken = import.meta.env.VITE_LEMMA_TOKEN;
+    if (envToken) {
+      activeToken = envToken;
+      localStorage.setItem("lemma_token", envToken);
+    }
   }
 }
 
+// Resolve pod ID
+let activePodId = import.meta.env.VITE_LEMMA_POD_ID || "019f1181-ece3-75a3-b428-fc49449d1adb";
+if (isBrowser) {
+  const manualPodId = localStorage.getItem("lemma_pod_id");
+  if (manualPodId) {
+    activePodId = manualPodId;
+  } else {
+    localStorage.setItem("lemma_pod_id", activePodId);
+  }
+}
 
-
-export const client = new LemmaClient();
+export const client = new LemmaClient({
+  podId: activePodId,
+  apiUrl: import.meta.env.VITE_LEMMA_API_URL || "https://api.lemma.work",
+  authUrl: import.meta.env.VITE_LEMMA_AUTH_URL || "https://lemma.work/auth"
+});
 
 
 export interface Question {
