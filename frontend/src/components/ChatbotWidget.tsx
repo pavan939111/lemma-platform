@@ -133,24 +133,8 @@ export default function ChatbotWidget({ isOpen, setIsOpen, isSidebar = false }: 
 
     const qLower = text.toLowerCase().trim();
 
-    // STEP 1: Query Classification (Check domain relevance)
-    const isRelated = RELEVANT_KEYWORDS.some((k) => qLower.includes(k));
-    if (!isRelated) {
-      setTimeout(() => {
-        setMessages((prev) => [
-          ...prev,
-          {
-            sender: "bot",
-            text: "This is outside the scope of VaadDoc's legal assistant. Please ask a relevant question regarding Indian legal procedures, the statutory BNS/IPC transition, or our drafting tool.",
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-          }
-        ]);
-        setLoading(false);
-      }, 500);
-      return;
-    }
+    // STEP 1: RAG Retrieval & Classification via native Lemma Pod Agent
 
-    // STEP 2: RAG Retrieval via native Lemma Pod Agent
     try {
       const conv = (await client.agents.run("chatbot_agent", text)) as any;
       
@@ -187,8 +171,22 @@ export default function ChatbotWidget({ isOpen, setIsOpen, isSidebar = false }: 
 
     // Local RAG database lookup (fallback if API key is missing or fails)
     setTimeout(() => {
-      let botResponse = "";
+      // Check relevance locally for fallback path
+      const isRelatedLocal = RELEVANT_KEYWORDS.some((k) => qLower.includes(k));
+      if (!isRelatedLocal) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            sender: "bot",
+            text: "This is outside the scope of VaadDoc's legal assistant. Please ask a relevant question regarding Indian legal procedures, the statutory BNS/IPC transition, or our drafting tool.",
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          }
+        ]);
+        setLoading(false);
+        return;
+      }
 
+      let botResponse = "";
       for (const record of FAKE_DB) {
         if (record.keywords.some((k) => qLower.includes(k))) {
           botResponse = record.response;
@@ -211,6 +209,7 @@ export default function ChatbotWidget({ isOpen, setIsOpen, isSidebar = false }: 
       ]);
       setLoading(false);
     }, 600);
+
   };
 
   // If rendered as sidebar (open)
