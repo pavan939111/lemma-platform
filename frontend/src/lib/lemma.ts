@@ -1,9 +1,14 @@
 import { LemmaClient } from "lemma-sdk";
 
 const token = import.meta.env.VITE_LEMMA_TOKEN;
-if (typeof window !== "undefined" && token) {
-  localStorage.setItem("lemma_token", token);
+if (typeof window !== "undefined") {
+  if (window.location.hostname.endsWith(".apps.lemma.work")) {
+    localStorage.removeItem("lemma_token");
+  } else if (token) {
+    localStorage.setItem("lemma_token", token);
+  }
 }
+
 
 
 const podId = import.meta.env.VITE_LEMMA_POD_ID;
