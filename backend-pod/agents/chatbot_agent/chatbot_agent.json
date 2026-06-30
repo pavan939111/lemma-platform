@@ -5,5 +5,5 @@
   "model": "gemini-2.5-flash",
   "temperature": 0.1,
   "toolsets": ["POD"],
-  "visibility": "POD"
+  "visibility": "PUBLIC"
 }

@@ -175,5 +175,5 @@
     { "id": "e11", "source": "a6_doc_builder", "target": "a7_qc_guard" },
     { "id": "e12", "source": "a7_qc_guard", "target": "end" }
   ],
-  "visibility": "POD"
+  "visibility": "PUBLIC"
 }
