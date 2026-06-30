@@ -4,10 +4,12 @@ const isBrowser = typeof window !== "undefined";
 
 // Resolve token
 let activeToken = "";
+let isManualToken = false;
 if (isBrowser) {
   const manualToken = localStorage.getItem("lemma_token");
   if (manualToken) {
     activeToken = manualToken;
+    isManualToken = true;
   } else {
     const envToken = import.meta.env.VITE_LEMMA_TOKEN;
     if (envToken && !window.location.hostname.endsWith(".apps.lemma.work")) {
@@ -28,11 +30,18 @@ if (isBrowser) {
   }
 }
 
-export const client = new LemmaClient({
-  podId: activePodId,
-  apiUrl: import.meta.env.VITE_LEMMA_API_URL || "https://api.lemma.work",
-  authUrl: import.meta.env.VITE_LEMMA_AUTH_URL || "https://lemma.work/auth"
-});
+const isHosted = isBrowser && window.location.hostname.endsWith(".apps.lemma.work");
+
+export const client = new LemmaClient(
+  isHosted && !isManualToken
+    ? { podId: activePodId }
+    : {
+        podId: activePodId,
+        apiUrl: import.meta.env.VITE_LEMMA_API_URL || "https://api.lemma.work",
+        authUrl: import.meta.env.VITE_LEMMA_AUTH_URL || "https://lemma.work/auth"
+      }
+);
+
 
 
 export interface Question {
