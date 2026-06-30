@@ -10,7 +10,7 @@ if (isBrowser) {
     activeToken = manualToken;
   } else {
     const envToken = import.meta.env.VITE_LEMMA_TOKEN;
-    if (envToken) {
+    if (envToken && !window.location.hostname.endsWith(".apps.lemma.work")) {
       activeToken = envToken;
       localStorage.setItem("lemma_token", envToken);
     }
