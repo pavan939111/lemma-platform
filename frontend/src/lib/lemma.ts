@@ -114,6 +114,62 @@ export function pollRunStatus(
   onNeedsInput: (questions: Question[]) => void,
   onError: (error: string) => void
 ) {
+  if (runId.startsWith("demo_session_")) {
+    const parts = runId.split("_");
+    const docType = parts[parts.length - 1] || "civil_plaint";
+    const stepsList = ["A1", "A2", "A3", "A4", "A5", "A6", "A7"];
+    let currentStepIdx = 0;
+    
+    const friendlyMessages: Record<string, string> = {
+      A1: "Normalizing input...",
+      A2: "Cleaning case notes...",
+      A3: "Extracting entities...",
+      A4: "Validating inputs...",
+      A5: "Determining legal framework...",
+      A6: "Assembling document templates...",
+      A7: "Conducting source grounding audits...",
+    };
+
+    const interval = setInterval(() => {
+      if (currentStepIdx < stepsList.length) {
+        const agent = stepsList[currentStepIdx];
+        const progress = Math.floor(((currentStepIdx + 1) / stepsList.length) * 100);
+        onUpdate(agent, "running", progress, friendlyMessages[agent]);
+        currentStepIdx++;
+      } else {
+        clearInterval(interval);
+        
+        const result: PipelineResult = {
+          docx_url: "/templates/vaaddoc_demo_draft.docx",
+          confidence_score: 0.96,
+          source_map: [
+            { field: "plaintiff", value: "Demo Plaintiff", source_ref: "Plaintiff Name" },
+            { field: "defendant", value: "Demo Defendant", source_ref: "Defendant Name" },
+            { field: "cause_of_action", value: "Breach of contract occurred", source_ref: "Cause of action details" },
+            { field: "court", value: "District Court of Delhi", source_ref: "Delhi Jurisdiction" },
+          ],
+          qc_flags: [
+            { field: "court", severity: "LOW", message: "Stamp value calculations confirmed." }
+          ],
+          legal_framework: docType === "bail_application" ? "BNSS (2023) / BNS (2023)" : docType === "cheque_notice" ? "Negotiable Instruments Act (Sec 138)" : "CPC (1908)",
+          entities: {
+            plaintiff: { name: "Demo Plaintiff", address: "123 Legal Enclave, Delhi" },
+            defendant: { name: "Demo Defendant", address: "456 Accused Boulevard, Delhi" },
+            court: { name: "District Court of Delhi", district: "New Delhi", state: "Delhi" },
+            cause_of_action: { description: "Breach of commercial supply contract causing financial loss.", date: "2026-06-15" },
+            valuation_of_suit: "Rs. 5,00,000",
+            relief_sought: ["Recovery of principal outstanding sum", "Pendente lite interest at 18% p.a.", "Cost of the suit"]
+          }
+        };
+        onComplete(result);
+      }
+    }, 1200);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }
+
   let isStopped = false;
   let wasWaiting = false;
 
